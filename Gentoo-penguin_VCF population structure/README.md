@@ -12,9 +12,6 @@ plink --vcf $vcf_64_noOutliers --maf 0.01 --indep-pairwise 50 10 0.1 --out gento
 plink --vcf $vcf_64_noOutliers --extract gentoo64maf001.prune.in --double-id  --allow-extra-chr --set-missing-var-ids @:# --recode vcf --out gentoo64maf001_50_10_01
 
 
-#### to use in ADMIXTURE
-plink --vcf $vcf_64_noOutliers --extract gentoo64maf001.prune.in --double-id --allow-extra-chr --set-missing-var-ids @:# --recode 12 --out gentoo64_MAF001_50_10_01
-
 
 ## 3 PCA
 
@@ -22,6 +19,10 @@ plink --file $vcf_64_noOutliers --out pca_gentoo_64_noOutliers --pca --allow-ext
 
 
 ## 4 Run ADMIXTURE
+
+
+#### ADMIXTURE input file 
+plink --vcf $vcf_64_noOutliers --extract gentoo64maf001.prune.in --double-id --allow-extra-chr --set-missing-var-ids @:# --recode 12 --out gentoo64_MAF001_50_10_01
 
 
 ```bash
