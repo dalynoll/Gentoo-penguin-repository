@@ -22,12 +22,13 @@ plink --file $vcf_64_noOutliers --out pca_gentoo_64_noOutliers --pca --allow-ext
 
 ## 4 Run ADMIXTURE
 
-'''bash
+
+```bash
 for K in 1 2 3 4 5 6 7 8 9 10 
 do 
-time admixture --cv vcf_64_noOutliers.ped $K -j8 | tee log${K}.out 
+	time admixture --cv vcf_64_noOutliers.ped $K -j8 | tee log${K}.out 
 done 
-'''
+```
 
 ## 5. Heterozygosity
 vcftools --vcf $vcf_64_noOutliers --het --out gentoo64_noOut_het
