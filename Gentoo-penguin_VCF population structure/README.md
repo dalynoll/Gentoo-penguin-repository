@@ -26,7 +26,7 @@ plink --file $vcf_64_noOutliers --out pca_gentoo_64_noOutliers --pca --allow-ext
 ```bash
 for K in 1 2 3 4 5 6 7 8 9 10 
 do 
-	time admixture --cv vcf_64_noOutliers.ped $K -j8 | tee log${K}.out 
+	admixture --cv vcf_64_noOutliers.ped $K -j8 | tee log${K}.out 
 done 
 ```
 
