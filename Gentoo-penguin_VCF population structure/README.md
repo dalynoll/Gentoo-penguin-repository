@@ -3,6 +3,7 @@
 
 ## 1 Outlier SNPs exclusion
 vcftools --gzvcf $vcf_64 --bed final_positions_noOutliers.bed --recode --out vcf_64_noOutliers
+###### IMPORTANT: The BED file contains SNPs located within RAiSD outlier windows
 
 ## 2 Minor allele frequency and Pruning by LD
 
