@@ -8,21 +8,28 @@
 #### for each lineage, do:
 
 ###### split VCF by scaffold/chromosome
+
+```bash
 list=$(cat "scaff_name.txt")
 
 for i in $list;
 do vcftools  --vcf  $VCF_FILE  --chr $i  --recode --recode-INFO-all --out  $i&
 done
-wait
+wait```
+
 
 
 ###### Running RAiSD
+
+```bash
 list=$(cat "$vcf/scaff_name.txt")
 
 for i in $list
 do
 RAiSD -n $i -I $vcf/$i.recode.vcf -D -P -O -A 0.99 -s -t -R 
 done
+```
+
 
 
 
