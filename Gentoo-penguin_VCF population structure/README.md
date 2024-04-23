@@ -37,6 +37,12 @@ vcftools --vcf $vcf_64_noOutliers --het --out gentoo64_noOut_het
 
 
 ## 6. FST - DXY using pixy
+
+###### First, a new variant calling of variant and invariant sites was performed:
+
+cat chromosome.list.selection | xargs -I {} -n 1 -P 40 sh -c 'bcftools mpileup -Ou -f GCA_010090195.1_BGI_Ppap.V1_genomic.fna -b bam_list -d 5000 -q 10 -Q 20 -a SP,DP --skip-indels -r {} --rf 2 | bcftools call -f GQ -m -Oz -o {}.vcf.gz'
+
+
 #### windows 5kb (genome divergence Figure 1f)
 pixy --stats pi dxy fst --vcf $VCF_var_invar --populations pop_list.txt --window_size 5000 --n_cores 20 --fst_type wc 
 
