@@ -9,31 +9,31 @@ vcftools --gzvcf $vcf_64 --bed final_positions_noOutliers.bed --recode --out vcf
 
 plink --vcf $vcf_64_noOutliers --maf 0.01 --indep-pairwise 50 10 0.1 --out gentoo64maf001 --set-missing-var-ids @:# --double-id --allow-extra-chr
 
-plink --vcf $vcf_64_noOutliers --extract gentoo64maf001.prune.in --double-id  --allow-extra-chr --set-missing-var-ids @:# --recode vcf --out gentoo64maf001_50_10_01
+plink --vcf $vcf_64_noOutliers --extract gentoo64maf001.prune.in --double-id  --allow-extra-chr --set-missing-var-ids @:# --recode vcf --out gentoo64_noOutliers_maf001_50_10_01
 
 
 
 ## 3 PCA
 
-plink --file $vcf_64_noOutliers --out pca_gentoo_64_noOutliers --pca --allow-extra-chr
+plink --file $gentoo64_noOutliers_maf001_50_10_01 --out pca_gentoo_64_noOutliers --pca --allow-extra-chr
 
 
 ## 4 Run ADMIXTURE
 
 
 #### ADMIXTURE input file 
-plink --vcf $vcf_64_noOutliers --extract gentoo64maf001.prune.in --double-id --allow-extra-chr --set-missing-var-ids @:# --recode 12 --out gentoo64_MAF001_50_10_01
+plink --vcf $gentoo64_noOutliers_maf001_50_10_01 --extract gentoo64maf001.prune.in --double-id --allow-extra-chr --set-missing-var-ids @:# --recode 12 --out gentoo64_MAF001_50_10_01
 
 
 ```bash
 for K in 1 2 3 4 5 6 7 8 9 10 
 do 
-	admixture --cv vcf_64_noOutliers.ped $K -j8 | tee log${K}.out 
+	admixture --cv gentoo64_noOutliers_maf001_50_10_01.ped $K -j8 | tee log${K}.out 
 done 
 ```
 
 ## 5. Heterozygosity
-vcftools --vcf $vcf_64_noOutliers --het --out gentoo64_noOut_het
+vcftools --vcf $gentoo64_noOutliers_maf001_50_10_01 --het --out gentoo64_noOut_het
 
 
 ## 6. FST - DXY using pixy
