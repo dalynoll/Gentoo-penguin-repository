@@ -68,10 +68,11 @@ PAM3
 PAM5
 PAM7"
 
-for i in $file
+```for i in $file
 do
 samtools idxstats ${i}.bam > ${i}.idxstats
 done
+```
 
 
 ###### The output is TAB-delimited with each line consisting of reference sequence name, sequence length, # mapped read-segments and # unmapped read-segments. It is written to stdout. Note this may count reads multiple times if they are mapped more than once or in multiple fragments. (https://www.htslib.org/doc/samtools-idxstats.html)
