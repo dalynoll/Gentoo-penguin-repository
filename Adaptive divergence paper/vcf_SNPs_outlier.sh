@@ -10,3 +10,5 @@ bedtools merge -i gentoo_all_outlier_windows_sorted.bed > gentoo_all_outlier_win
 
 vcftools --gzvcf $vcf/gentoo.vcf.gz --keep gentoo62_toVCFoutlier.txt --bed gentoo_all_outlier_windows_sorted_merged.bed --recode --out gentoo_outliers
  ### After filtering, kept 31234 out of a possible 9158384 Sites
+
+
