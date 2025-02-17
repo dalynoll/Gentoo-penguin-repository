@@ -90,7 +90,7 @@ while read -r gen; do
             if ($0 ~ /^>/) { 
                 found=0
                 header = toupper($0)
-                if (header ~ ">" gen_upper"([^a-zA-Z0-9_-]|$)") {  # Asegura coincidencia exacta del nombre
+                if (header ~ ">" gen_upper"([^a-zA-Z0-9_-]|$)") {
                     print ">" sample
                     found=1
                 }
