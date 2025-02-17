@@ -10,6 +10,8 @@ for i in $file
 do
 agat_sp_extract_sequences.pl -g $anotation/genomic.gff -f $genomes/${i}_maskedPygo.fa -o $cds/1_agat/${i}_cds.fa -t cds
 done
+##### gff from GCA_010090195.1 (reference genome) and GCA_030674165.1 (South Georgia gentoo assembly) were used
+
 
 #####################################################################################
 ######################## Modify header of agat extracted CDS ########################
