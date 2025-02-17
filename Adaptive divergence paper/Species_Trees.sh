@@ -68,5 +68,31 @@ awk -f rename_fasta.awk id2gene.map 1_agat/${i}_cds.fa > 2_cds_reheader/${i}_cds
 #################################################################################################################
 ##################### Search common gen names with South Georgea assembly (GCA_030674165.1) #####################
 #################################################################################################################
-cat *.fa |grep '^>' |sort |uniq -c |grep ' 67 ' >core_genes.txt
-###2,269 genes
+cat *.fa | grep '^>' | tr '[:lower:]' '[:upper:]' | sort | uniq -c | grep ' 67 ' | cut -d'>' -f2 > core_genes_corrected.txt
+### 10,299 genes
+
+##### Extract common genes:
+
+#!/bin/bash
+
+mkdir -p 3_seq_genes
+
+while read -r line; do
+    gen=$(echo $line | awk '{print $2}' | sed 's/^>//')
+    echo "Procesando gen: $gen"
+
+    out="3_seq_genes/${gen}.fa"
+    > "$out"
+
+    for fasta in 2_cds_reheader/*_cds_renamed.fa; do
+        sample=$(basename "$fasta" _cds_renamed.fa)
+
+        awk -v gene="$gen" -v sample="$sample" '
+        BEGIN {found=0}
+        /^>/ {found=0} 
+        $0 ~ "^>"gene"$" {print ">"sample; found=1; next} 
+        found==1 && !/^>/ {print $0}
+        ' "$fasta" >> "$out"
+    done
+done < 3_seq_genes/core_genes.txt
+
