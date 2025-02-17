@@ -70,6 +70,7 @@ awk -f rename_fasta.awk id2gene.map 1_agat/${i}_cds.fa > 2_cds_reheader/${i}_cds
 #################################################################################################################
 cat *.fa | grep '^>' | tr '[:lower:]' '[:upper:]' | sort | uniq -c | grep ' 67 ' | cut -d'>' -f2 > core_genes_corrected.txt
 ### 10,299 genes
+### 67 samples: 65 gentoo penguins (including 2 from Macquarie and 1 from South Georgias), one chinstrap and one adelie penguin
 
 ##### Extract common genes:
 #!/bin/bash
