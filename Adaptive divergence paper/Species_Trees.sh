@@ -72,13 +72,9 @@ cat *.fa | grep '^>' | tr '[:lower:]' '[:upper:]' | sort | uniq -c | grep ' 67 '
 ### 10,299 genes
 
 ##### Extract common genes:
-
 #!/bin/bash
-
 mkdir -p 3_seq_genes
-
-while read -r line; do
-    gen=$(echo $line | awk '{print $2}' | sed 's/^>//')
+while read -r gen; do
     echo "Procesando gen: $gen"
 
     out="3_seq_genes/${gen}.fa"
@@ -88,11 +84,19 @@ while read -r line; do
         sample=$(basename "$fasta" _cds_renamed.fa)
 
         awk -v gene="$gen" -v sample="$sample" '
-        BEGIN {found=0}
-        /^>/ {found=0} 
-        $0 ~ "^>"gene"$" {print ">"sample; found=1; next} 
-        found==1 && !/^>/ {print $0}
+        BEGIN {found=0; gen_upper = toupper(gene)}
+        {
+            if ($0 ~ /^>/) { 
+                found=0
+                header = toupper($0)
+                if (header ~ ">" gen_upper"([^a-zA-Z0-9_-]|$)") {  # Asegura coincidencia exacta del nombre
+                    print ">" sample
+                    found=1
+                }
+            } else if (found) {
+                print $0
+            }
+        }
         ' "$fasta" >> "$out"
     done
-done < 3_seq_genes/core_genes.txt
-
+done < 3_seq_genes/core_genes_corrected.txt
