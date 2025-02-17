@@ -73,31 +73,64 @@ cat *.fa | grep '^>' | tr '[:lower:]' '[:upper:]' | sort | uniq -c | grep ' 67 '
 ### 67 samples: 65 gentoo penguins (including 2 from Macquarie and 1 from South Georgias), one chinstrap and one adelie penguin
 
 ##### Extract common genes:
+#!/usr/bin/env python3
+
+import os
+indir = "2_cds_reheader"
+outdir = "3_seq_genes"
+os.makedirs(outdir, exist_ok=True)
+
+core_file = "3_seq_genes/core_genes_corrected.txt"
+with open(core_file, "r") as cf:
+    core_set = { line.strip().upper() for line in cf if line.strip() }
+
+for filename in os.listdir(indir):
+    if filename.endswith("_cds_renamed.fa"):
+        sample = filename.replace("_cds_renamed.fa", "")
+        print(f"Processing {filename}...")
+
+        with open(os.path.join(indir, filename), "r") as infile:
+            current_gene = None
+            seq_lines = []
+            
+            for line in infile:
+                line = line.rstrip("\n")
+                if line.startswith(">"):
+ 
+                    if current_gene and current_gene.upper() in core_set and seq_lines:
+                        out_path = os.path.join(outdir, f"{current_gene.upper()}.fa")
+                        with open(out_path, "a") as gene_file:
+                            gene_file.write(f">{sample}\n")
+                            gene_file.write("\n".join(seq_lines) + "\n")
+
+                    current_gene = line[1:].strip()  # remover '>'
+                    seq_lines = []
+                else:
+                    seq_lines.append(line)
+    
+            if current_gene and current_gene.upper() in core_set and seq_lines:
+                out_path = os.path.join(outdir, f"{current_gene.upper()}.fa")
+                with open(out_path, "a") as gene_file:
+                    gene_file.write(f">{sample}\n")
+                    gene_file.write("\n".join(seq_lines) + "\n")
+
+
+
+############################################################################
+######################## Align sequences with MAFFT ########################
+############################################################################
+
 #!/bin/bash
-mkdir -p 3_seq_genes
-while read -r gen; do
-    echo "Procesando gen: $gen"
+mkdir -p 4_align_mafft
 
-    out="3_seq_genes/${gen}.fa"
-    > "$out"
+for fasta in 3_seq_genes/*.fa; do
+    gene=$(basename "$fasta" .fa)
+    echo "Alineando $gene con MAFFT..."
 
-    for fasta in 2_cds_reheader/*_cds_renamed.fa; do
-        sample=$(basename "$fasta" _cds_renamed.fa)
+    mafft --auto "$fasta" > "4_align_mafft/${gene}_aligned.fa"
+done
 
-        awk -v gene="$gen" -v sample="$sample" '
-        BEGIN {found=0; gen_upper = toupper(gene)}
-        {
-            if ($0 ~ /^>/) { 
-                found=0
-                header = toupper($0)
-                if (header ~ ">" gen_upper"([^a-zA-Z0-9_-]|$)") {
-                    print ">" sample
-                    found=1
-                }
-            } else if (found) {
-                print $0
-            }
-        }
-        ' "$fasta" >> "$out"
-    done
-done < 3_seq_genes/core_genes_corrected.txt
+
+
+
+
