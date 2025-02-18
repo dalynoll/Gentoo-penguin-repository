@@ -121,14 +121,28 @@ for filename in os.listdir(indir):
 ############################################################################
 
 #!/bin/bash
+source activate mafft
 mkdir -p 4_align_mafft
 
-for fasta in 3_seq_genes/*.fa; do
-    gene=$(basename "$fasta" .fa)
-    echo "Alineando $gene con MAFFT..."
+ls 3_seq_genes/*.fa | \
+xargs -P 30 -I {} bash -c '
+  f="{}"
+  b=$(basename "$f" .fa)
+  echo "Alineando $f ..."
+  mafft --auto "$f" > "4_align_mafft/${b}_aligned.fa"
+'
 
-    mafft --auto "$fasta" > "4_align_mafft/${gene}_aligned.fa"
-done
+############################################################
+######################## Gene trees ########################
+############################################################
+
+
+
+
+
+
+
+
 
 
 
