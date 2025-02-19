@@ -135,12 +135,8 @@ xargs -P 30 -I {} bash -c '
 ############################################################
 ######################## Gene trees ########################
 ############################################################
-
-source activate iqtree
-mkdir -p 5_gene_trees_iqtree
-
 #!/bin/bash
-
+source activate iqtree
 mkdir -p 5_gene_trees_iqtree
 
 ls 4_align_mafft_2269/*.fa | xargs -P 4 -I {} bash -c '
@@ -154,6 +150,7 @@ ls 4_align_mafft_2269/*.fa | xargs -P 4 -I {} bash -c '
 ######################## Species trees ########################
 ###############################################################
 
+#!/bin/bash
 mkdir -p 6_SpeciesTree_astral
 
 java -jar /data2/daly/gentoo/filogenias/cds/programas/ASTRAL/Astral/astral.5.7.8.jar \
