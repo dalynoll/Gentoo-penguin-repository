@@ -61,16 +61,18 @@ NR == FNR {
 }
 
 ### Run:
-awk -f rename_fasta.awk id2gene.map 1_agat/${i}_cds.fa > 2_cds_reheader/${i}_cds_renamed.fa
-
+for i in $(ls 1_agat/*.fa | sed 's#.*/##; s#_cds.fa##'); do
+  echo "Procesando $i"
+  awk -f rename_fasta.awk id2gene.map 1_agat/${i}_cds.fa > 2_cds_reheader/${i}_cds_renamed.fa
+done
 
 
 #################################################################################################################
 ##################### Search common gen names with South Georgea assembly (GCA_030674165.1) #####################
 #################################################################################################################
-cat *.fa | grep '^>' | sort | uniq -c | grep ' 67 ' | cut -d'>' -f2 > core_genes.txt
+cat *.fa | grep '^>' | sort | uniq -c | grep ' 66 ' | cut -d'>' -f2 > core_genes.txt
 ### 2,269 genes
-### 67 samples: 65 gentoo penguins (including 2 from Macquarie and 1 from South Georgias), one chinstrap and one adelie penguin
+### 66 samples: 64 gentoo penguins (including 1 from Macquarie and 1 from South Georgias), one chinstrap and one adelie penguin
 
 ##### Extract common genes:
 #!/usr/bin/env python3
@@ -145,6 +147,7 @@ ls 4_align_mafft_2269/*.fa | xargs -P 4 -I {} bash -c '
   iqtree2 -s "$f" -m MFP -bb 1000 -T 8 -pre "5_gene_trees_iqtree/$base"
 '
 
+cat *.treefile > all_gene_trees.tre
 
 ###############################################################
 ######################## Species trees ########################
@@ -154,7 +157,7 @@ ls 4_align_mafft_2269/*.fa | xargs -P 4 -I {} bash -c '
 mkdir -p 6_SpeciesTree_astral
 
 java -jar /data2/daly/gentoo/filogenias/cds/programas/ASTRAL/Astral/astral.5.7.8.jar \
-  -i lista_trees_gene.txt \
+  -i list_gene_trees.txt \
   -o species_tree.tre
 
 
