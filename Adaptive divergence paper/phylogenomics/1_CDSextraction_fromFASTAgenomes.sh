@@ -66,11 +66,3 @@ for i in $(ls 1_agat/*.fa | sed 's#.*/##; s#_cds.fa##'); do
   awk -f rename_fasta.awk id2gene.map 1_agat/${i}_cds.fa > 2_cds_reheader/${i}_cds_renamed.fa
 done
 
-
-#################################################################################################################
-##################### Search common gen names with South Georgea assembly (GCA_030674165.1) #####################
-#################################################################################################################
-cat *.fa | grep '^>' | sort | uniq -c | grep ' 66 ' | cut -d'>' -f2 > core_genes.txt
-### 2,269 genes
-### 66 samples: 64 gentoo penguins (including 1 from Macquarie and 1 from South Georgias), one chinstrap and one adelie penguin
-
