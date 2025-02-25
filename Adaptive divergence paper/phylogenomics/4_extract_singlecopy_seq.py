@@ -1,48 +1,99 @@
 #!/usr/bin/env python3
 """
 Script to extract single-copy ortholog sequences and generate a FASTA
-for each orthogroup. It is based on the file Orthogroups_SingleCopyOrthologues.txt
-(produced by Orthofinder) and on the simplified proteomes (already reheadered headers)
-located in a directory.
+for each orthogroup. It uses two files:
+  - Orthogroups_SingleCopyOrthologues.txt: a list (one per line) of OG IDs (no header).
+  - Orthogroups.txt: full mapping file (TSV or space‐separated) where each line is:
+      OGID: geneID_sample1 geneID_sample2 ... geneID_sampleN
+
+The script requires a comma-separated list of sample names (in the same order as
+the gene IDs appear in Orthogroups.txt, after the OG ID) so that it can find the corresponding
+FASTA files (named <sample>.fa) in a given directory.
 
 Excecution:
 python3 3extract_single_copy_orthogroups.py \
-  -o 2orthofinder/Results_Feb24/Orthogroups/Orthogroups_SingleCopyOrthologues.txt \
+  -sco 2orthofinder/Results_Feb24/Orthogroups/Orthogroups_SingleCopyOrthologues.txt \
+  -og 2orthofinder/Results_Feb24/Orthogroups/Orthogroups.txt \
   -f 1fasta_cds_curated/reheader \
   -out 3single_copy \
   -s "13A2_cds,15A2_cds,24A1_cds,CRO05_cds,CRO07_cds,CRO08_cds,GSA10_cds,GSA7_cds,GSA9_cds,GTP06_cds,GTP07_cds,GTP12_cds,MQ9209_cds,MQ9312_cds,P0048_cds,P0052_cds,P0065_cds,P0173_cds,P0196_cds,P0200_cds,P0404_cds,P0407_cds,P0412_cds,P1885_cds,P1889_cds,P1893_cds,PAM3_cds,PAM5_cds,PAM7_cds,adel_cds,chins_cds,sgeorgia_cds"
 
+
+
 """
 
 import os
-import csv
 import argparse
+
 from Bio import SeqIO
+
+def load_singlecopy_og_ids(singlecopy_path):
+    """Load OG IDs from Orthogroups_SingleCopyOrthologues.txt into a set."""
+    og_set = set()
+    with open(singlecopy_path, "r") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                og_set.add(line)
+    return og_set
+
+def parse_orthogroups(orthogroups_path, singlecopy_set):
+    """
+    Parse Orthogroups.txt.
+    Returns a dict mapping OG_ID to a list of gene IDs (one per sample).
+    Only OGs that are in the singlecopy_set are returned.
+    Assumes each line is in the format:
+      OGID: geneID1 geneID2 ... geneIDN
+    """
+    og_mapping = {}
+    with open(orthogroups_path, "r") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            # Split on colon
+            parts = line.split(":", 1)
+            if len(parts) != 2:
+                continue
+            og_id = parts[0].strip()
+            # Only process OGs in the singlecopy list
+            if og_id not in singlecopy_set:
+                continue
+            # Split the rest by whitespace to get gene IDs
+            gene_ids = parts[1].strip().split()
+            og_mapping[og_id] = gene_ids
+    return og_mapping
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Extracts single-copy sequences from orthogroups and generates a FASTA per orthogroup"
+        description="Extract single-copy sequences for each orthogroup and generate a FASTA per OG."
     )
     parser.add_argument(
-        "-o", "--orthogroups", required=True,
-        help="Path to file Orthogroups_SingleCopyOrthologues.txt (TSV format, no header)"
+        "-sco", "--singlecopy_file", required=True,
+        help="Path to Orthogroups_SingleCopyOrthologues.txt (one OG ID per line)"
+    )
+    parser.add_argument(
+        "-og", "--orthogroups_file", required=True,
+        help="Path to Orthogroups.txt (mapping: OGID: geneID geneID ...)"
     )
     parser.add_argument(
         "-f", "--fasta_dir", required=True,
-        help="Directory where FASTA with simplified headers are located (e.g., 1fasta_cds_curated/reheader)"
+        help="Directory where FASTA files with simplified headers are located (e.g., 1fasta_cds_curated/reheader)"
     )
     parser.add_argument(
         "-out", "--output_dir", required=True,
-        help="Output directory where orthogroup FASTAs will be written (e.g., 3single_copy)"
+        help="Output directory where OG FASTAs will be written (e.g., 3single_copy)"
     )
     parser.add_argument(
         "-s", "--samples", required=True,
-        help=("Comma-separated list of sample names, in the order corresponding to the columns in the orthogroups file "
-              "(excluding the first column which is the orthogroup ID).")
+        help=("Comma-separated list of sample names, in the order corresponding to the columns in Orthogroups.txt "
+              "(excluding the OG ID). For example: "
+              "\"13A2_cds,15A2_cds,24A1_cds,CRO05_cds,...,sgeorgia_cds\"")
     )
     args = parser.parse_args()
 
-    orthogroups_file = args.orthogroups
+    singlecopy_file = args.singlecopy_file
+    orthogroups_file = args.orthogroups_file
     fasta_dir = args.fasta_dir
     output_dir = args.output_dir
     sample_list = [s.strip() for s in args.samples.split(",")]
@@ -50,52 +101,52 @@ def main():
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    # FASTA files are assumed to be named <sample>.fa
-    # Example: 13A2_cds.fa, 15A2_cds.fa, etc.
+    # Load single-copy OG IDs into a set
+    singlecopy_set = load_singlecopy_og_ids(singlecopy_file)
+    print(f"Loaded {len(singlecopy_set)} single-copy OG IDs.")
+
+    # Parse the full Orthogroups.txt mapping (only keeping OGs in singlecopy_set)
+    og_mapping = parse_orthogroups(orthogroups_file, singlecopy_set)
+    print(f"Found {len(og_mapping)} OG mappings in Orthogroups.txt for single-copy OGs.")
+
+    # Index FASTA files for each sample (assumed to be named <sample>.fa)
     species_to_index = {}
     for file in os.listdir(fasta_dir):
         if file.endswith(".fa"):
-            species = os.path.splitext(file)[0]  # extracts, for example, "13A2_cds"
+            species = os.path.splitext(file)[0]  # e.g., "13A2_cds"
             fasta_path = os.path.join(fasta_dir, file)
             print(f"Indexing {species} from {fasta_path}...")
             species_to_index[species] = SeqIO.index(fasta_path, "fasta")
 
-    # Process the orthogroups file (no header, TSV)
-    with open(orthogroups_file, "r") as og_file:
-        reader = csv.reader(og_file, delimiter="\t")
-        for row in reader:
-            if not row:
-                continue
-            # The first column is the orthogroup ID
-            og_id = row[0]
-            out_path = os.path.join(output_dir, f"{og_id}.fa")
-            with open(out_path, "w") as out_f:
-                # Ensure that the number of columns (excluding the first) matches the sample list length
-                if len(row) - 1 != len(sample_list):
-                    print(f"Warning: In orthogroup {og_id}, number of columns ({len(row)-1}) does not match sample list length ({len(sample_list)}). Skipping this OG.")
+    # Process each orthogroup
+    for og_id, gene_ids in og_mapping.items():
+        # Check that the number of gene IDs matches the number of samples
+        if len(gene_ids) != len(sample_list):
+            print(f"Warning: In orthogroup {og_id}, number of gene IDs ({len(gene_ids)}) does not match sample list length ({len(sample_list)}). Skipping this OG.")
+            continue
+        out_path = os.path.join(output_dir, f"{og_id}.fa")
+        with open(out_path, "w") as out_f:
+            # For each sample, get the corresponding gene ID (by column order)
+            for i, sample in enumerate(sample_list):
+                gene_id = gene_ids[i].strip()
+                # If gene_id is empty or "NA", skip it
+                if gene_id == "" or gene_id.upper() == "NA":
                     continue
-                # For each sample, in order
-                for i, sample in enumerate(sample_list):
-                    gene_id_field = row[i+1].strip()
-                    if gene_id_field == "" or gene_id_field.upper() == "NA":
-                        continue
-                    # In single-copy, each cell is expected to have a unique ID; if there are more, take the first.
-                    gene_id = gene_id_field.split(",")[0].strip()
-                    if sample in species_to_index:
-                        fasta_index = species_to_index[sample]
-                        if gene_id in fasta_index:
-                            record = fasta_index[gene_id]
-                            # Modify header: include sample name and gene ID
-                            record.id = f"{sample}|{gene_id}"
-                            record.description = ""
-                            SeqIO.write(record, out_f, "fasta")
-                        else:
-                            print(f"Warning: {gene_id} not found in {sample}")
+                if sample in species_to_index:
+                    fasta_index = species_to_index[sample]
+                    if gene_id in fasta_index:
+                        record = fasta_index[gene_id]
+                        # Modify header to include sample name and gene id
+                        record.id = f"{sample}|{gene_id}"
+                        record.description = ""
+                        SeqIO.write(record, out_f, "fasta")
                     else:
-                        print(f"Warning: FASTA file not found for sample {sample}")
-            print(f"Orthogroup {og_id} written to {out_path}")
+                        print(f"Warning: {gene_id} not found in {sample}")
+                else:
+                    print(f"Warning: FASTA file not found for sample {sample}")
+        print(f"Orthogroup {og_id} written to {out_path}")
 
-    # Close all indexes
+    # Close all FASTA indexes
     for idx in species_to_index.values():
         idx.close()
 
