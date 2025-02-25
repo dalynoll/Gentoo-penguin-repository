@@ -1,8 +1,5 @@
 #!/bin/bash
 source activate orthofinder
 
-orthofinder -f 2fastaProt32/ -t 30 -a 30 -o 3orthofinder/ -S diamond
+orthofinder -f /path/to/input_fasta -t 30 -a 30 -o 2orthofinder/ -S diamondd
 
-
-
-#### for filogeny: Orthogroups_SingleCopyOrthologues.txt
