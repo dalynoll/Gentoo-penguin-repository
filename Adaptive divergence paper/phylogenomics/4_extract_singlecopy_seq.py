@@ -137,7 +137,7 @@ def main():
                     if gene_id in fasta_index:
                         record = fasta_index[gene_id]
                         # Modify header to include sample name and gene id
-                        record.id = f"{sample}|{gene_id}"
+                        record.id = sample.split("_cds")[0]
                         record.description = ""
                         SeqIO.write(record, out_f, "fasta")
                     else:
