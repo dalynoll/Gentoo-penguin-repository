@@ -7,7 +7,6 @@ located in a directory.
 """
 
 import os
-import sys
 import csv
 import argparse
 from Bio import SeqIO
@@ -18,21 +17,27 @@ def main():
     )
     parser.add_argument(
         "-o", "--orthogroups", required=True,
-        help="Path to file Orthogroups_SingleCopyOrthologues.txt (TSV format)"
+        help="Path to file Orthogroups_SingleCopyOrthologues.txt (TSV format, no header)"
     )
     parser.add_argument(
         "-f", "--fasta_dir", required=True,
-        help="Directory where FASTA with simplified headers are located (eg: 1fasta_cds_curated/reheader)"
+        help="Directory where FASTA with simplified headers are located (e.g., 1fasta_cds_curated/reheader)"
     )
     parser.add_argument(
         "-out", "--output_dir", required=True,
-        help="Output directory where orthogroup FASTAs will be written (eg: 3single_copy)"
+        help="Output directory where orthogroup FASTAs will be written (e.g., 3single_copy)"
+    )
+    parser.add_argument(
+        "-s", "--samples", required=True,
+        help=("Comma-separated list of sample names, in the order corresponding to the columns in the orthogroups file "
+              "(excluding the first column which is the orthogroup ID).")
     )
     args = parser.parse_args()
 
     orthogroups_file = args.orthogroups
     fasta_dir = args.fasta_dir
     output_dir = args.output_dir
+    sample_list = [s.strip() for s in args.samples.split(",")]
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -44,41 +49,45 @@ def main():
         if file.endswith(".fa"):
             species = os.path.splitext(file)[0]  # extracts, for example, "13A2_cds"
             fasta_path = os.path.join(fasta_dir, file)
-            print(f"Indexando {species} desde {fasta_path}...")
+            print(f"Indexing {species} from {fasta_path}...")
             species_to_index[species] = SeqIO.index(fasta_path, "fasta")
 
-    # Opening the single-copy orthogroups (TSV) file
+    # Process the orthogroups file (no header, TSV)
     with open(orthogroups_file, "r") as og_file:
-        reader = csv.DictReader(og_file, delimiter="\t")
-       
-      
-        for row in reader:                         # The header has: Orthogroup, <sample1>, <sample2>, ... according to the order used by Orthofinder.
-            og_id = row["Orthogroup"]
+        reader = csv.reader(og_file, delimiter="\t")
+        for row in reader:
+            if not row:
+                continue
+            # The first column is the orthogroup ID
+            og_id = row[0]
             out_path = os.path.join(output_dir, f"{og_id}.fa")
             with open(out_path, "w") as out_f:
-               
-                for species in reader.fieldnames[1:]:    # For each sample (column, except the Orthogroup column)
-                    gene_id_field = row.get(species, "").strip()
+                # Ensure that the number of columns (excluding the first) matches the sample list length
+                if len(row) - 1 != len(sample_list):
+                    print(f"Warning: In orthogroup {og_id}, number of columns ({len(row)-1}) does not match sample list length ({len(sample_list)}). Skipping this OG.")
+                    continue
+                # For each sample, in order
+                for i, sample in enumerate(sample_list):
+                    gene_id_field = row[i+1].strip()
                     if gene_id_field == "" or gene_id_field.upper() == "NA":
                         continue
-                    
-                    gene_id = gene_id_field.split(",")[0].strip()  # In single-copy each cell is expected to have a unique ID.
-                   
-                    if species in species_to_index:     # Find the sequence in the corresponding index:
-                        fasta_index = species_to_index[species]
+                    # In single-copy, each cell is expected to have a unique ID; if there are more, take the first.
+                    gene_id = gene_id_field.split(",")[0].strip()
+                    if sample in species_to_index:
+                        fasta_index = species_to_index[sample]
                         if gene_id in fasta_index:
                             record = fasta_index[gene_id]
-                            
-                            record.id = f"{species}|{gene_id}"    # Modify the header to include the name of the sample (species)
+                            # Modify header: include sample name and gene ID
+                            record.id = f"{sample}|{gene_id}"
                             record.description = ""
                             SeqIO.write(record, out_f, "fasta")
                         else:
-                            print(f"Warning: {gene_id} was not found in {species}")
+                            print(f"Warning: {gene_id} not found in {sample}")
                     else:
-                        print(f"Warning: FASTA file not found for {species}")
-            print(f"Orthogroup {og_id} escrito en {out_path}")
+                        print(f"Warning: FASTA file not found for sample {sample}")
+            print(f"Orthogroup {og_id} written to {out_path}")
 
-    # Close indexes
+    # Close all indexes
     for idx in species_to_index.values():
         idx.close()
 
