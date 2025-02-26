@@ -16,7 +16,7 @@ python3 3extract_single_copy_orthogroups.py \
   -og 2orthofinder/Results_Feb24/Orthogroups/Orthogroups.txt \
   -f 1fasta_cds_curated/reheader \
   -out 3single_copy \
-  -s "13A2_cds,15A2_cds,24A1_cds,CRO05_cds,CRO07_cds,CRO08_cds,GSA10_cds,GSA7_cds,GSA9_cds,GTP06_cds,GTP07_cds,GTP12_cds,MQ9209_cds,MQ9312_cds,P0048_cds,P0052_cds,P0065_cds,P0173_cds,P0196_cds,P0200_cds,P0404_cds,P0407_cds,P0412_cds,P1885_cds,P1889_cds,P1893_cds,PAM3_cds,PAM5_cds,PAM7_cds,adel_cds,chins_cds,sgeorgia_cds"
+  -s "adel_cds,chins_cds,P1885_cds,P1889_cds,P1893_cds,PAM3_cds,PAM5_cds,PAM7_cds,sgeorgia_cds,GSA10_cds,GSA7_cds,GSA9_cds,P0173_cds,P0196_cds,P0200_cds,P0404_cds,P0407_cds,P0412_cds,P0048_cds,P0052_cds,P0065_cds,13A2_cds,15A2_cds,24A1_cds,CRO05_cds,CRO07_cds,CRO08_cds,GTP06_cds,GTP07_cds,GTP12_cds,MQ9209_cds,MQ9312_cds"
 
 
 
