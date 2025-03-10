@@ -53,6 +53,13 @@ pca_res <- prcomp(morf_log, center = TRUE, scale. = FALSE)
 # 3.2. Summary
 summary(pca_res)
 
+## Importance of components:
+##                          PC1    PC2     PC3     PC4     PC5     PC6     PC7     PC8
+## Standard deviation     0.2292 0.1092 0.09355 0.07596 0.05176 0.04735 0.03428 0.03345
+## Proportion of Variance 0.6041 0.1371 0.10062 0.06633 0.03079 0.02578 0.01351 0.01287
+## Cumulative Proportion  0.6041 0.7412 0.84181 0.90814 0.93893 0.96471 0.97822 0.99109
+
+
 pca_log <- prcomp(morf_log, center = TRUE, scale. = FALSE)
 
 library(ggplot2)
@@ -139,6 +146,12 @@ ggsave("PCA_polygons.pdf",
 mod_manova <- manova(as.matrix(morf_log) ~ Locality + Lineage, data = morf)
 summary(mod_manova, test = "Pillai")
 
+##           Df Pillai approx F num Df den Df    Pr(>F)    
+## Locality   7 2.2762   2.1416     63    280 1.365e-05 ***
+## Residuals 42                                            
+
+
+
 library(vegan)
 
 # Euclidian distance from log-transformed matrix
@@ -149,16 +162,49 @@ dist_morf <- dist(morf_log, method = "euclidean")
 adonis_res <- adonis2(dist_morf ~ Locality + Lineage, data = morf, permutations = 999)
 adonis_res
 
+## Permutation test for adonis under reduced model
+## Permutation: free
+## Number of permutations: 999
+
+## adonis2(formula = dist_morf ~ Locality + Lineage, data = morf, permutations = 999)
+##          Df SumOfSqs      R2      F Pr(>F)    
+## Model     7   1.4383 0.33745 3.0559  0.001 ***
+## Residual 42   2.8240 0.66255                  
+## Total    49   4.2623 1.00000                  
+
+
+
+
 ### LDA ###
 library(MASS)
 
 lda_df <- data.frame(Lineage = morf$Lineage, morf_log)
 lda_res <- lda(Lineage ~ ., data = lda_df)
+
 lda_res
+## lda(Lineage ~ ., data = lda_df)
+## Prior probabilities of groups:
+##      Eastern     Macquarie      Northern South_Georgia  Southeastern      Southern 
+##       0.02          0.18          0.18          0.26          0.16          0.20 
+
+
+## Proportion of trace:
+##   LD1    LD2    LD3    LD4    LD5 
+## 0.5711 0.2999 0.0929 0.0321 0.0040 
+
+
 
 predict_lda <- predict(lda_res)
-table(Real = lda_df$Lineage, Predicho = predict_lda$class)
+table(Real = lda_df$Lineage, Predicted = predict_lda$class)
 
+##                  Predicted
+## Real            Eastern Macquarie Northern South_Georgia Southeastern Southern
+##  Eastern             1         0        0             0            0        0
+##  Macquarie           0         5        0             2            2        0
+##  Northern            0         0        8             0            1        0
+##  South_Georgia       0         1        1            11            0        0
+##  Southeastern        0         0        0             0            7        1
+##  Southern            0         1        0             0            0        9
 
 
 ############################################################################
@@ -171,11 +217,26 @@ morf$Region <- ifelse(morf$Locality %in% c("Crozet", "Macquarie", "Falklands"), 
 mod_manova <- manova(as.matrix(morf_log) ~ Region, data = morf)
 summary(mod_manova, test = "Pillai")
 
+##           Df  Pillai approx F num Df den Df   Pr(>F)    
+## Region     2 0.81417   3.0515     18     80 0.000324 ***
+## Residuals 47 
+
+
 # PERMANOVA
 library(vegan)
 adonis_res <- adonis2(dist_morf ~ Region, data = morf, permutations = 999)
 adonis_res
 
+## Permutation test for adonis under reduced model
+## Permutation: free
+## Number of permutations: 999
+
+## adonis2(formula = dist_morf ~ Region, data = morf, permutations = 999)
+##          Df SumOfSqs      R2      F Pr(>F)   
+## Model     2   0.6690 0.15695 4.3751  0.002 **
+## Residual 47   3.5933 0.84305                 
+## 
+Total    49   4.2623 1.00000     
 
 library(ggplot2)
 library(dplyr)
@@ -212,7 +273,6 @@ mi_plot <- ggplot() +
   labs(title = "PCA North vs. South APF")
 
 print(mi_plot)
-
 ggsave("PCA_polygon_N_S_APF.pdf", 
        plot = mi_plot, 
        device = "pdf", 
