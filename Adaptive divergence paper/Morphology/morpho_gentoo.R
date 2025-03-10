@@ -253,7 +253,7 @@ pca_scores$Locality <- morf$Locality
 
 pca_data_hull <- pca_scores %>%
   group_by(Region) %>%
-  slice(chull(PC1, PC2))  # Función chull() encuentra la envolvente convexa
+  slice(chull(PC1, PC2))  
 
 mi_plot <- ggplot() +
   geom_polygon(
